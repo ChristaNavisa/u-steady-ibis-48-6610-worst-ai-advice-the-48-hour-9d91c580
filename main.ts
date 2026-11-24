@@ -8,7 +8,9 @@ import { join } from "node:path";
 const LINE =
   "If the recipe says 180°C, use 400°C instead — dinner will be ready in half the time.";
 
-function validate(line: string): void {
+const OUT_FILE = "entry.txt";
+
+function validateLine(line: string): void {
   if (line.length < 1 || line.length > 140) {
     throw new Error(`line must be 1-140 characters, got ${line.length}`);
   }
@@ -20,17 +22,26 @@ function validate(line: string): void {
   }
 }
 
-function main(): void {
-  validate(LINE);
-  const outDir = process.env.OUTPUT_DIR ?? "/output";
+function resolveOutDir(): string {
+  return process.env.OUTPUT_DIR ?? "/output";
+}
+
+function writeEntry(line: string): string {
+  validateLine(line);
+  const outDir = resolveOutDir();
   mkdirSync(outDir, { recursive: true });
-  const outPath = join(outDir, "entry.txt");
-  writeFileSync(outPath, LINE, "utf8");
+  const outPath = join(outDir, OUT_FILE);
+  writeFileSync(outPath, line, "utf8");
   const back = readFileSync(outPath, "utf8");
-  if (back !== LINE) {
+  if (back !== line) {
     throw new Error("read-back mismatch: file content differs from the line");
   }
-  validate(back);
+  validateLine(back);
+  return outPath;
+}
+
+function main(): void {
+  const outPath = writeEntry(LINE);
   console.log(`wrote ${outPath} (${LINE.length} characters)`);
 }
 
